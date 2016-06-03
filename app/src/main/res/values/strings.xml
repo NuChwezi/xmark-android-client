@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">XMark</string>
+    <string name="message_scan">Scan someone\'s XMark</string>
+</resources>

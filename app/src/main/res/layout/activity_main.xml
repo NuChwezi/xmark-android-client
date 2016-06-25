@@ -7,7 +7,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.nuchwezi.xmark.MainActivity">
+    tools:context="com.nuchwezi.xmark.MainActivity"
+    android:background="@drawable/bg">
 
     <Button
         android:id="@+id/btnScan"

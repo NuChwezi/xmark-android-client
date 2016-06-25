@@ -1,0 +1,14 @@
+{
+    "updateInfo":{
+        "appName": "XMARK",
+        "appDescription": "A total replacement for Business Cards",
+        "packageName": "com.nuchwezi.xmark",
+        "versionCode": "2",
+        "versionName": "1.1",
+        "forceUpdate": false,
+        "autoUpdate": true,
+        "apkUrl": "https://bitbucket.org/nemesisfixx/mminds-data-binaries/raw/master/RokePOS.apk",
+	"message": "Bundle-1: update to branding and agent labels..."
+    }
+}
+

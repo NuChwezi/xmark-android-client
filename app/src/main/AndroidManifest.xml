@@ -17,6 +17,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.nuchwezi.xmark.SettingsActivity"
+            android:label="@string/action_settings"
+            android:windowSoftInputMode="stateUnchanged" >
+        </activity>
     </application>
 
 </manifest>

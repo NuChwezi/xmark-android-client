@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:threefiftyprefs="http://schemas.android.com/apk/res/com.toxicity.android">
+    <PreferenceCategory
+        android:title="MY XMark Settings"
+        android:key="PREF_KEY_SETTINGS">
+        <EditTextPreference
+            android:key="PREF_KEY_SETTINGS_DISPLAY_NAME"
+            android:summary="Name to be displayed on your contact"
+            android:title="Display Name"
+             />
+        <EditTextPreference
+            android:key="PREF_KEY_SETTINGS_PHONE_NUMBER"
+            android:summary="Phone number to be attached to your contact"
+            android:title="Phone Number"
+            />
+        <EditTextPreference
+            android:key="PREF_KEY_SETTINGS_EMAIL_ADDRESS"
+            android:summary="Email address to be attached to your contact"
+            android:title="Email Address"
+            />
+        <EditTextPreference
+            android:key="PREF_KEY_SETTINGS_COMPANY"
+            android:summary="Company name to be used on your contact"
+            android:title="Company or Institution"
+            />
+        <EditTextPreference
+            android:key="PREF_KEY_SETTINGS_TITLE"
+            android:summary="Your working title"
+            android:title="Work Title"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

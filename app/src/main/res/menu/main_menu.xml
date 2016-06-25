@@ -13,7 +13,7 @@
         android:icon="@drawable/ic_action_settings"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_about"
-        app:showAsAction="ifRoom|collapseActionView"
+        android:id="@+id/action_about"
+        app:showAsAction="ifRoom"
         android:title="About"/>
 </menu>

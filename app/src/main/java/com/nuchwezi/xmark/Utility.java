@@ -34,12 +34,12 @@ import java.util.jar.JarFile;
 public class Utility {
 
     public static class APK {
-        public static final String APK_UPDATE_CONFIG_URI = "https://bitbucket.org/nemesisfixx/mminds-data-binaries/raw/master/xmark-updates.json";
-        public static final String APK_UPDATE_URI = "https://bitbucket.org/nemesisfixx/mminds-data-binaries/raw/master/XMark.apk";
+        public static final String APK_UPDATE_CONFIG_URI = "https://raw.githubusercontent.com/NuChwezi/xmark-android-client/master/release/xmark-updates.json";
+        public static final String APK_UPDATE_URI = "https://raw.githubusercontent.com/NuChwezi/xmark-android-client/master/release/XMark.apk";
 
         protected static final String APK_DOWNLOAD_PATH = createSDCardDir("XMARK_Updates");
 
-        protected static final String NEW_APK_NAME = "update.apk";
+        protected static final String NEW_APK_NAME = "XMark-Update.apk";
         public static final String KEY_VERSIONCODE = "versionCode";
         public static final String KEY_AUTOUPDATE = "autoUpdate";
         public static final boolean DEFAULT_AUTOUPDATE = false;

@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int QRCODE_SIZE = 500;
+    private static final int QRCODE_SIZE = 800;
     public static final String TAG = "XMARK";
     private Handler handler;
 
@@ -89,6 +89,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.action_myxmark) {
             showMyXMark();
+            return true;
+        }
+
+        if (id == R.id.action_about) {
+            showAbout();
             return true;
         }
         return super.onOptionsItemSelected(item);

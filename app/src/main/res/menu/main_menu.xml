@@ -7,6 +7,11 @@
         android:orderInCategory="100"
         android:icon="@drawable/ic_action_myxmark"
         app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_sharexmark"
+        android:title="@string/action_sharexmark"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_action_sharexmark"
+        app:showAsAction="ifRoom" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

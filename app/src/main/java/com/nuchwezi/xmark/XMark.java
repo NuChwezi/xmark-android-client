@@ -9,6 +9,7 @@ public class XMark {
         public static String MobileNumber = "phone";
         public static String Email = "email";
         public static String Company = "company";
-        public static String JobTitle = "job_title";
+        public static String JobTitle = "title";
+        public static String Meta = "meta";
     }
 }

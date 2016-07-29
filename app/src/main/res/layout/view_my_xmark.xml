@@ -1,15 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="10dip">
 
-    <ImageView
+
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/imageViewXMark"
-        android:layout_centerVertical="true"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Display Name"
+        android:id="@+id/txtDisplayName"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_margin="20dip" />
+        android:layout_marginTop="10dip"
+        android:textIsSelectable="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Telephone"
+        android:id="@+id/txtPhone"
+        android:layout_below="@+id/txtDisplayName"
+        android:layout_centerHorizontal="true"
+        android:textIsSelectable="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Email"
+        android:id="@+id/txtEmail"
+        android:layout_below="@+id/txtPhone"
+        android:layout_centerHorizontal="true"
+        android:textIsSelectable="true" />
+
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txtEmail"
+        android:layout_above="@+id/btnCancel"
+        android:layout_centerHorizontal="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="5dip"
+            android:background="@color/background_floating_material_dark"
+            android:id="@+id/metaContainer">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/imageViewXMark"
+                android:scaleType="fitStart"
+                android:layout_marginTop="0dp"
+                android:cropToPadding="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:id="@+id/txtOther"
+                android:textColor="@color/dim_foreground_material_dark"
+                android:textIsSelectable="true" />
+
+        </LinearLayout>
+    </ScrollView>
+
+
 
     <Button
         android:layout_width="wrap_content"

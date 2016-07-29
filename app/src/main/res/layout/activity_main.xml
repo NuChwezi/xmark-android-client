@@ -25,8 +25,64 @@
         android:shadowDy="0"
         android:shadowRadius="5"
 
-        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        />
+        android:layout_alignParentTop="false"
+        android:layout_marginTop="30dip" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="false"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentRight="false"
+        android:id="@+id/layButtons1"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/btnScan"
+        android:layout_marginTop="20dip">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CALL"
+            android:id="@+id/btnXMarkCall"
+            android:layout_gravity="bottom"
+            android:onClick="scanXMarkAndCall"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SMS"
+            android:id="@+id/btnXMarkSMS"
+            android:layout_gravity="bottom"
+            android:onClick="scanXMarkAndSMS"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="false"
+        android:id="@+id/layButtons2"
+        android:layout_below="@+id/layButtons1">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMAIL"
+            android:id="@+id/btnXMarkEmail"
+            android:layout_gravity="bottom"
+            android:onClick="scanXMarkAndEmail"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VIEW"
+            android:id="@+id/btnXMarkPIC"
+            android:onClick="scanXMarkAndViewPic"/>
+    </LinearLayout>
 
 </RelativeLayout>

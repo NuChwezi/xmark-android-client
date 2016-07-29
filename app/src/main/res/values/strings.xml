@@ -3,5 +3,6 @@
     <string name="message_scan">Scan someone\'s XMark</string>
     <string name="action_settings">Your Settings</string>
     <string name="action_myxmark">My Xmark</string>
-    <string name="powered_by">XMark is a built and maintained by NuChwezi (nuchwezi.com)</string>
+    <string name="powered_by">XMark is built and maintained by NuChwezi (nuchwezi.com)</string>
+    <string name="action_sharexmark">Share Xmark</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.nuchwezi.xmark;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentProviderOperation;
@@ -7,18 +8,29 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.URLUtil;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
@@ -27,17 +39,35 @@ import com.google.zxing.client.android.Intents;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.journeyapps.barcodescanner.Util;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
+
+import fr.tkeunebr.gravatar.Gravatar;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int QRCODE_SIZE = 800;
     public static final String TAG = "XMARK";
+    private static final int WEBVIEW_HEIGHT = 400;
     private Handler handler;
+
+    enum ScanIntent {
+        CreateContact,
+        InitiateCall,
+        InitiateSMS,
+        InitiateEmail,
+        ViewImage,
+        ViewXMarkInfo
+    }
+
+    ScanIntent currentScanIntent = ScanIntent.CreateContact;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
                 if (event.getAction() == (MotionEvent.ACTION_UP)) {
                     //Do whatever you want after press
                     btnScan.setBackgroundResource(btnBackgrounds[1]);
+                    currentScanIntent = ScanIntent.CreateContact;
                     launchScanner();
                 } else {
                     btnScan.setBackgroundResource(btnBackgrounds[0]);
@@ -92,11 +123,40 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_sharexmark) {
+            shareXMark();
+            return true;
+        }
+
         if (id == R.id.action_about) {
             showAbout();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void scanXMarkAndCall(View view) {
+        currentScanIntent = ScanIntent.InitiateCall;
+        launchScanner();
+    }
+
+    public void scanXMarkAndSMS(View view) {
+        currentScanIntent = ScanIntent.InitiateSMS;
+        launchScanner();
+    }
+
+    public void scanXMarkAndEmail(View view) {
+        currentScanIntent = ScanIntent.InitiateEmail;
+        launchScanner();
+    }
+
+    public void scanXMarkAndViewPic(View view) {
+        currentScanIntent = ScanIntent.ViewImage;
+        launchScanner();
+    }
+
+    private void shareXMark() {
+        showQRCODE(Utility.APK.APK_DOWNLOAD_PATH, "Share XMark via URL");
     }
 
     public static class PREFERENCES {
@@ -117,25 +177,25 @@ public class MainActivity extends AppCompatActivity {
     private void showMyXMark() {
         JSONObject xmark = new JSONObject();
         try {
-            xmark.put(XMark.PARAMS.DisplayName,getSetting(PREFERENCES.KEY_DISPLAY_NAME,"XMark: Unknown",this));
-            xmark.put(XMark.PARAMS.MobileNumber,getSetting(PREFERENCES.KEY_MOBILE,"XMark: Unknown",this));
-            xmark.put(XMark.PARAMS.Email,getSetting(PREFERENCES.KEY_EMAIL,"XMark: Unknown",this));
-            xmark.put(XMark.PARAMS.Company,getSetting(PREFERENCES.KEY_COMPANY,"XMark: Unknown",this));
-            xmark.put(XMark.PARAMS.JobTitle,getSetting(PREFERENCES.KEY_TITLE,"XMark: Unknown",this));
+            xmark.put(XMark.PARAMS.DisplayName, getSetting(PREFERENCES.KEY_DISPLAY_NAME, "XMark: Unknown", this));
+            xmark.put(XMark.PARAMS.MobileNumber, getSetting(PREFERENCES.KEY_MOBILE, "XMark: Unknown", this));
+            xmark.put(XMark.PARAMS.Email, getSetting(PREFERENCES.KEY_EMAIL, "XMark: Unknown", this));
+            xmark.put(XMark.PARAMS.Company, getSetting(PREFERENCES.KEY_COMPANY, "XMark: Unknown", this));
+            xmark.put(XMark.PARAMS.JobTitle, getSetting(PREFERENCES.KEY_TITLE, "XMark: Unknown", this));
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        String jXMark = xmark.toString();
-        showXMark(jXMark);
+
+        showQRCODE(xmark, "Preview XMark");
 
     }
 
-    private void showXMark(String jXMark) {
+    private void showQRCODE(String data, String title) {
         //set up dialog
-        Dialog dialog = new Dialog(MainActivity.this);
+        final Dialog dialog = new Dialog(MainActivity.this);
         dialog.setContentView(R.layout.view_my_xmark);
-        dialog.setTitle("Preview XMark");
+        dialog.setTitle(title);
         dialog.setCancelable(true);
         //there are a lot of settings, for dialog, check them all out!
 
@@ -143,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         ImageView img = (ImageView) dialog.findViewById(R.id.imageViewXMark);
         QRCodeWriter writer = new QRCodeWriter();
         try {
-            BitMatrix bitMatrix = writer.encode(jXMark, BarcodeFormat.QR_CODE, QRCODE_SIZE, QRCODE_SIZE);
+            BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, QRCODE_SIZE, QRCODE_SIZE);
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
             Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
@@ -162,7 +222,49 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                dialog.dismiss();
+            }
+        });
+        //now that the dialog is set up, it's time to show it
+        dialog.show();
+    }
+
+    private void showQRCODE(JSONObject jXMark, String title) {
+        //set up dialog
+        final Dialog dialog = new Dialog(MainActivity.this);
+        dialog.setContentView(R.layout.view_my_xmark);
+        dialog.setTitle(title);
+        dialog.setCancelable(true);
+        //there are a lot of settings, for dialog, check them all out!
+
+        renderDetails(jXMark,dialog);
+
+        String data = jXMark.toString();
+
+        //set up image view
+        ImageView img = (ImageView) dialog.findViewById(R.id.imageViewXMark);
+        QRCodeWriter writer = new QRCodeWriter();
+        try {
+            BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, QRCODE_SIZE, QRCODE_SIZE);
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            img.setImageBitmap(bmp);
+        } catch (WriterException e) {
+            e.printStackTrace();
+        }
+
+        //set up button
+        Button button = (Button) dialog.findViewById(R.id.btnCancel);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
             }
         });
         //now that the dialog is set up, it's time to show it
@@ -191,7 +293,30 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     JSONObject jsonObject = new JSONObject(scannedJSON);
-                    parseAndCreateContact(jsonObject);
+
+                    switch (currentScanIntent) {
+                        case CreateContact: {
+                            parseAndCreateContact(jsonObject);
+                            break;
+                        }
+                        case InitiateCall: {
+                            parseAndMakeCall(jsonObject);
+                            break;
+                        }
+                        case InitiateSMS: {
+                            parseAndSendSMS(jsonObject);
+                            break;
+                        }
+                        case InitiateEmail: {
+                            parseAndSendEmail(jsonObject);
+                            break;
+                        }
+                        case ViewImage: {
+                            parseAndShowImage(jsonObject);
+                            break;
+                        }
+                    }
+
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -200,6 +325,281 @@ public class MainActivity extends AppCompatActivity {
             } else if (resultCode == RESULT_CANCELED) {
 
             }
+        }
+    }
+
+    private void parseAndShowImage(JSONObject jXMark) {
+
+        String EmailAddress = null;
+        try {
+            EmailAddress = jXMark.getString(XMark.PARAMS.Email);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (EmailAddress != null) {
+
+            //set up dialog
+            final Dialog dialog = new Dialog(MainActivity.this);
+            dialog.setContentView(R.layout.view_my_xmark);
+            dialog.setTitle("The XMark Gravatar");
+            dialog.setCancelable(true);
+            //there are a lot of settings, for dialog, check them all out!
+
+            renderDetails(jXMark,dialog);
+
+
+            //set up button
+            Button button = (Button) dialog.findViewById(R.id.btnCancel);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+
+            //set up image view
+            ImageView img = (ImageView) dialog.findViewById(R.id.imageViewXMark);
+
+            String gravatarUrl = Gravatar.init().with(EmailAddress).size(QRCODE_SIZE).build();
+            Log.d("XMARK",gravatarUrl);
+
+            Picasso.with(this)
+                    .load(gravatarUrl)
+                    .placeholder(R.drawable.loading)
+                    .error(R.drawable.erorr)
+                    .into(img);
+
+            //now that the dialog is set up, it's time to show it
+            dialog.show();
+
+        }else {
+            Toast.makeText(this, String.format("XMARK: There is no email address information to use to fetch the contact image from Gravatar!"), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void renderDetails(JSONObject jXMark, Dialog parentView) {
+
+        String EmailAddress = null;
+        try {
+            EmailAddress = jXMark.getString(XMark.PARAMS.Email);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        TextView tEmail = (TextView) parentView.findViewById(R.id.txtEmail);
+        if(EmailAddress != null){
+            tEmail.setText(EmailAddress);
+        }else
+            tEmail.setText("");
+
+
+        String MobileNumber = null;
+        try {
+            MobileNumber = jXMark.getString(XMark.PARAMS.MobileNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        String DisplayName = null;
+        try {
+            DisplayName = jXMark.getString(XMark.PARAMS.DisplayName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        TextView tPhone = (TextView) parentView.findViewById(R.id.txtPhone);
+        if(MobileNumber != null){
+            tPhone.setText(MobileNumber);
+        }else
+            tPhone.setText("");
+
+        TextView tName = (TextView) parentView.findViewById(R.id.txtDisplayName);
+        if(DisplayName != null){
+            tName.setText(DisplayName);
+        }else
+            tName.setText("");
+
+
+        StringBuilder builder = new StringBuilder();
+        try {
+            builder.append(String.format("\n%s: %s\n", Utility.toTitleCase(XMark.PARAMS.Company), jXMark.getString(XMark.PARAMS.Company) ));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        try {
+            builder.append(String.format("\n%s: %s\n", Utility.toTitleCase(XMark.PARAMS.JobTitle), jXMark.getString(XMark.PARAMS.JobTitle) ));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        String meta = null;
+        try {
+            meta = jXMark.getString(XMark.PARAMS.Meta);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if(meta != null) {
+            //first, we try to see if meta is a json object...
+            JSONObject metaDict = null;
+            try {
+                metaDict = new JSONObject(meta);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            if (metaDict != null) {
+
+                Iterator<?> keys = metaDict.keys();
+
+                while( keys.hasNext() ) {
+                    String key = (String)keys.next();
+                    try {
+                        String val = metaDict.getString(key);
+
+                        builder.append(String.format("\n%s: %s\n", Utility.toTitleCase(key), val ));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }else {
+                // we try for if it's a URL...
+                Uri uri = null;
+                if(URLUtil.isValidUrl(meta.trim())) {
+                    try {
+                        uri = Uri.parse(meta.trim());
+
+                        builder.append(String.format("\nURI: %s\n", uri));
+
+                        //also, load page in webview...
+                        LinearLayout linearLayout = (LinearLayout) parentView.findViewById(R.id.metaContainer);
+                        final TouchyWebView web = new TouchyWebView(this);
+                        web.getSettings().setJavaScriptEnabled(true);
+                        web.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                view.loadUrl(url);
+                                return false;
+                            }
+                        });
+                        web.loadUrl(uri.toString());
+                        LinearLayout.LayoutParams webViewParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, WEBVIEW_HEIGHT);
+                        web.setLayoutParams(webViewParams);
+                        linearLayout.addView(web);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                //if uri was null, we just render as text...
+                if(uri == null){
+                    builder.append(String.format("\n** Meta **\n" +
+                            "\n %s", meta.trim()));
+                }
+            }
+        }
+
+        TextView tOther = (TextView) parentView.findViewById(R.id.txtOther);
+        tOther.setMovementMethod(LinkMovementMethod.getInstance());
+        if(builder.length() > 0){
+            tOther.setText(builder.toString());
+        }else
+            tOther.setText("");
+
+    }
+
+
+    private void parseAndSendEmail(JSONObject jXMark) {
+
+
+        String EmailAddress = null;
+        try {
+            EmailAddress = jXMark.getString(XMark.PARAMS.Email);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (EmailAddress != null) {
+
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{ EmailAddress });
+            i.putExtra(android.content.Intent.EXTRA_TEXT, "Sent using XMark");
+            startActivity(Intent.createChooser(i, "Send Email"));
+
+        }else {
+            Toast.makeText(this, String.format("XMARK: There is no email address information to use to create the Email!"), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    private void parseAndSendSMS(JSONObject jXMark) {
+        String MobileNumber = null;
+        try {
+            MobileNumber = jXMark.getString(XMark.PARAMS.MobileNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        String DisplayName = null;
+        try {
+            DisplayName = jXMark.getString(XMark.PARAMS.DisplayName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (MobileNumber != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+
+            intent.setData(Uri.parse("sms:" + MobileNumber));
+
+            if(DisplayName != null) {
+                intent.putExtra("sms_body", String.format("Hi %s,\n\n", DisplayName));
+            }
+
+            /*if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                Toast.makeText(this, String.format("XMARK: The Call Permission is required, in order to place this call!"), Toast.LENGTH_LONG).show();
+                return;
+            }*/
+            startActivity(intent);
+        }else {
+            Toast.makeText(this, String.format("XMARK: There is no phone contact information to use to create the SMS!"), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void parseAndMakeCall(JSONObject jXMark) {
+        String MobileNumber = null;
+        try {
+            MobileNumber = jXMark.getString(XMark.PARAMS.MobileNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (MobileNumber != null) {
+            Intent intent = new Intent(Intent.ACTION_CALL);
+
+            intent.setData(Uri.parse("tel:" + MobileNumber));
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                Toast.makeText(this, String.format("XMARK: The Call Permission is required, in order to place this call!"), Toast.LENGTH_LONG).show();
+                return;
+            }
+            startActivity(intent);
+        }else {
+            Toast.makeText(this, String.format("XMARK: There is no phone contact information to use to place the call!"), Toast.LENGTH_LONG).show();
         }
     }
 

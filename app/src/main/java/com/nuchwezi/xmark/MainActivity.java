@@ -15,9 +15,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
@@ -25,6 +24,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.URLUtil;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -39,16 +40,15 @@ import com.google.zxing.client.android.Intents;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.journeyapps.barcodescanner.Util;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import androidx.core.content.ContextCompat;
 import fr.tkeunebr.gravatar.Gravatar;
 
 public class MainActivity extends AppCompatActivity {
@@ -74,7 +74,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         handler = new Handler();
-        checkAppUpdates();
+
+        if(getOrRequestWriteStoragePermission()) {
+            checkAppUpdates();
+        }
 
         final Button btnScan = (Button) findViewById(R.id.btnScan);
         final int[] btnBackgrounds = new int[]{
@@ -88,8 +91,10 @@ public class MainActivity extends AppCompatActivity {
                 if (event.getAction() == (MotionEvent.ACTION_UP)) {
                     //Do whatever you want after press
                     btnScan.setBackgroundResource(btnBackgrounds[1]);
-                    currentScanIntent = ScanIntent.CreateContact;
-                    launchScanner();
+                    if(getOrRequestCreateContactPermission()) {
+                        currentScanIntent = ScanIntent.CreateContact;
+                        launchScanner();
+                    }
                 } else {
                     btnScan.setBackgroundResource(btnBackgrounds[0]);
                 }
@@ -136,13 +141,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void scanXMarkAndCall(View view) {
-        currentScanIntent = ScanIntent.InitiateCall;
-        launchScanner();
+        if(getOrRequestCallPermission()) {
+            currentScanIntent = ScanIntent.InitiateCall;
+            launchScanner();
+        }
     }
 
     public void scanXMarkAndSMS(View view) {
-        currentScanIntent = ScanIntent.InitiateSMS;
-        launchScanner();
+        if(getOrRequestSMSPermission()) {
+            currentScanIntent = ScanIntent.InitiateSMS;
+            launchScanner();
+        }
     }
 
     public void scanXMarkAndEmail(View view) {
@@ -320,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
 
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    Utility.showAlert("INVALID XMark", "It is possible that this is an invalid XMark. Please ensure to scan a valid XMark as generated from \n\nxmark.chwezi.tech", this);
                 }
 
             } else if (resultCode == RESULT_CANCELED) {
@@ -327,6 +337,84 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private boolean hasPermissionCreateContact() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CONTACTS);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean getOrRequestCreateContactPermission() {
+        if(hasPermissionCreateContact()){
+            return true;
+        }else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_CONTACTS}, 101);
+        }
+
+        return false;
+    }
+
+    private boolean hasPermissionSMS() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean getOrRequestSMSPermission() {
+        if(hasPermissionSMS()){
+            return true;
+        }else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 101);
+        }
+
+        return false;
+    }
+
+    private boolean hasPermissionCall() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean getOrRequestCallPermission() {
+        if(hasPermissionCall()){
+            return true;
+        }else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, 101);
+        }
+
+        return false;
+    }
+
+
+    private boolean hasPermissionWriteStorage() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean getOrRequestWriteStoragePermission() {
+        if(hasPermissionWriteStorage()){
+            return true;
+        }else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 101);
+        }
+
+        return false;
+    }
+
 
     private void parseAndShowImage(JSONObject jXMark) {
 
@@ -474,7 +562,8 @@ public class MainActivity extends AppCompatActivity {
 
                         //also, load page in webview...
                         LinearLayout linearLayout = (LinearLayout) parentView.findViewById(R.id.metaContainer);
-                        final TouchyWebView web = new TouchyWebView(this);
+
+                        /*final TouchyWebView web = new TouchyWebView(this);
                         web.getSettings().setJavaScriptEnabled(true);
                         web.setWebViewClient(new WebViewClient() {
                             @Override
@@ -483,7 +572,34 @@ public class MainActivity extends AppCompatActivity {
                                 return false;
                             }
                         });
+                        web.loadUrl(uri.toString());*/
+
+                        WebView web = new WebView(this);
+
                         web.loadUrl(uri.toString());
+                        web.getSettings().setJavaScriptEnabled(true);
+                        web.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
+                        web.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                view.loadUrl(url);
+                                return true;
+                            }
+
+                            @Override
+                            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error){
+                            }
+
+                            @Override
+                            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                                super.onPageStarted(view, url, favicon);
+                            }
+
+                            public void onPageFinished(WebView view, String url) {
+                            }
+                        });
+
+
                         LinearLayout.LayoutParams webViewParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, WEBVIEW_HEIGHT);
                         web.setLayoutParams(webViewParams);
                         linearLayout.addView(web);
